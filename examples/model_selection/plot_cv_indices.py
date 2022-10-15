@@ -98,7 +98,7 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
     ax.set(yticks=np.arange(n_splits+2) + .5, yticklabels=yticklabels,
            xlabel='Sample index', ylabel="CV iteration",
            ylim=[n_splits+2.2, -.2], xlim=[0, 100])
-    ax.set_title('{}'.format(type(cv).__name__), fontsize=15)
+    ax.set_title(f'{type(cv).__name__}', fontsize=15)
     return ax
 
 

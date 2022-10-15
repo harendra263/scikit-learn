@@ -48,10 +48,11 @@ def _fix_connectivity(X, connectivity, affinity):
 
     # Convert connectivity matrix to LIL
     if not sparse.isspmatrix_lil(connectivity):
-        if not sparse.isspmatrix(connectivity):
-            connectivity = sparse.lil_matrix(connectivity)
-        else:
-            connectivity = connectivity.tolil()
+        connectivity = (
+            connectivity.tolil()
+            if sparse.isspmatrix(connectivity)
+            else sparse.lil_matrix(connectivity)
+        )
 
     # Compute the number of nodes
     n_connected_components, labels = connected_components(connectivity)
@@ -233,22 +234,21 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
 
-        if return_distance:
-            distances = out[:, 2]
-            return children_, 1, n_samples, None, distances
-        else:
+        if not return_distance:
             return children_, 1, n_samples, None
 
+        distances = out[:, 2]
+        return children_, 1, n_samples, None, distances
     connectivity, n_connected_components = _fix_connectivity(
                                                 X, connectivity,
                                                 affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
+    elif n_clusters > n_samples:
+        raise ValueError('Cannot provide more clusters than samples. '
+                         '%i n_clusters was asked, and there are %i samples.'
+                         % (n_clusters, n_samples))
     else:
-        if n_clusters > n_samples:
-            raise ValueError('Cannot provide more clusters than samples. '
-                             '%i n_clusters was asked, and there are %i samples.'
-                             % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
     # create inertia matrix
@@ -331,12 +331,11 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
 
-    if return_distance:
-        # 2 is scaling factor to compare w/ unstructured version
-        distances = np.sqrt(2. * distances)
-        return children, n_connected_components, n_leaves, parent, distances
-    else:
+    if not return_distance:
         return children, n_connected_components, n_leaves, parent
+    # 2 is scaling factor to compare w/ unstructured version
+    distances = np.sqrt(2. * distances)
+    return children, n_connected_components, n_leaves, parent, distances
 
 
 # single average and complete linkage
@@ -429,8 +428,9 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         join_func = linkage_choices[linkage]
     except KeyError:
         raise ValueError(
-            'Unknown linkage option, linkage should be one '
-            'of %s, but %s was given' % (linkage_choices.keys(), linkage))
+            f'Unknown linkage option, linkage should be one of {linkage_choices.keys()}, but {linkage} was given'
+        )
+
 
     if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
         raise ValueError(
@@ -509,11 +509,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         distances = np.empty(n_nodes - n_samples)
     # create inertia heap and connection matrix
     A = np.empty(n_nodes, dtype=object)
-    inertia = list()
-
     # LIL seems to the best format to access the rows quickly,
     # without the numpy overhead of slicing CSR indices and data.
     connectivity = connectivity.tolil()
+    inertia = []
     # We are storing the graph in a list of IntFloatDict
     for ind, (data, row) in enumerate(zip(connectivity.data,
                                           connectivity.rows)):
@@ -794,8 +793,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
-            raise ValueError("n_clusters should be an integer greater than 0."
-                             " %s was provided." % str(self.n_clusters))
+            raise ValueError(
+                f"n_clusters should be an integer greater than 0. {str(self.n_clusters)} was provided."
+            )
+
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError("Exactly one of n_clusters and "
@@ -808,14 +809,16 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                              "distance_threshold is set.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
-            raise ValueError("%s was provided as affinity. Ward can only "
-                             "work with euclidean distances." %
-                             (self.affinity, ))
+            raise ValueError(
+                f"{self.affinity} was provided as affinity. Ward can only work with euclidean distances."
+            )
+
 
         if self.linkage not in _TREE_BUILDERS:
-            raise ValueError("Unknown linkage type %s. "
-                             "Valid options are %s" % (self.linkage,
-                                                       _TREE_BUILDERS.keys()))
+            raise ValueError(
+                f"Unknown linkage type {self.linkage}. Valid options are {_TREE_BUILDERS.keys()}"
+            )
+
         tree_builder = _TREE_BUILDERS[self.linkage]
 
         connectivity = self.connectivity
@@ -826,9 +829,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 connectivity, accept_sparse=['csr', 'coo', 'lil'])
 
         n_samples = len(X)
-        compute_full_tree = self.compute_full_tree
         if self.connectivity is None:
             compute_full_tree = True
+        else:
+            compute_full_tree = self.compute_full_tree
         if compute_full_tree == 'auto':
             if self.distance_threshold is not None:
                 compute_full_tree = True
@@ -837,10 +841,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 # a large number of clusters. The actual threshold
                 # implemented here is heuristic
                 compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
-        n_clusters = self.n_clusters
-        if compute_full_tree:
-            n_clusters = None
-
+        n_clusters = None if compute_full_tree else self.n_clusters
         # Construct the tree
         kwargs = {}
         if self.linkage != 'ward':

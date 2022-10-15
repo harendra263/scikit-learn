@@ -33,7 +33,7 @@ def human_readable_data_quantity(quantity, multiple=1024):
 
 
 def get_pdf_size(version):
-    api_url = ROOT_URL + '%s/_downloads' % version
+    api_url = f'{ROOT_URL}{version}/_downloads'
     for path_details in json_urlread(api_url):
         if path_details['name'] == 'scikit-learn-docs.pdf':
             return human_readable_data_quantity(path_details['size'], 1000)
@@ -63,7 +63,7 @@ for path_details in root_listing:
         continue
     if path_details['type'] == 'dir':
         html = urlopen(RAW_FMT % name).read().decode('utf8')
-        version_num = VERSION_RE.search(html).group(1)
+        version_num = VERSION_RE.search(html)[1]
         pdf_size = get_pdf_size(name)
         dirs[name] = (version_num, pdf_size)
 
@@ -87,11 +87,10 @@ for name in (NAMED_DIRS +
         continue
     else:
         seen.add(version_num)
-    name_display = '' if name[:1].isdigit() else ' (%s)' % name
-    path = 'http://scikit-learn.org/%s' % name
-    out = ('* `Scikit-learn %s%s documentation <%s/documentation.html>`_'
-           % (version_num, name_display, path))
+    name_display = '' if name[:1].isdigit() else f' ({name})'
+    path = f'http://scikit-learn.org/{name}'
+    out = f'* `Scikit-learn {version_num}{name_display} documentation <{path}/documentation.html>`_'
+
     if pdf_size is not None:
-        out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`_)'
-                % (pdf_size, path))
+        out += f' (`PDF {pdf_size} <{path}/_downloads/scikit-learn-docs.pdf>`_)'
     print(out)

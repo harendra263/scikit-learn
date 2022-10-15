@@ -199,9 +199,11 @@ class Pipeline(_BaseComposition):
             stop -= 1
 
         for idx, (name, trans) in enumerate(islice(self.steps, 0, stop)):
-            if not filter_passthrough:
-                yield idx, name, trans
-            elif trans is not None and trans != 'passthrough':
+            if (
+                not filter_passthrough
+                or trans is not None
+                and trans != 'passthrough'
+            ):
                 yield idx, name, trans
 
     def __len__(self):
@@ -269,11 +271,9 @@ class Pipeline(_BaseComposition):
         for pname, pval in fit_params.items():
             if '__' not in pname:
                 raise ValueError(
-                    "Pipeline.fit does not accept the {} parameter. "
-                    "You can pass parameters to specific steps of your "
-                    "pipeline using the stepname__parameter format, e.g. "
-                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                    "=sample_weight)`.".format(pname))
+                    f"Pipeline.fit does not accept the {pname} parameter. You can pass parameters to specific steps of your pipeline using the stepname__parameter format, e.g. `Pipeline.fit(X, y, logisticregression__sample_weight=sample_weight)`."
+                )
+
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         for (step_idx,
@@ -285,22 +285,16 @@ class Pipeline(_BaseComposition):
                                          self._log_message(step_idx)):
                     continue
 
-            if hasattr(memory, 'location'):
-                # joblib >= 0.12
-                if memory.location is None:
-                    # we do not clone when caching is disabled to
-                    # preserve backward compatibility
-                    cloned_transformer = transformer
-                else:
-                    cloned_transformer = clone(transformer)
-            elif hasattr(memory, 'cachedir'):
-                # joblib < 0.11
-                if memory.cachedir is None:
-                    # we do not clone when caching is disabled to
-                    # preserve backward compatibility
-                    cloned_transformer = transformer
-                else:
-                    cloned_transformer = clone(transformer)
+            if (
+                hasattr(memory, 'location')
+                and memory.location is None
+                or not hasattr(memory, 'location')
+                and hasattr(memory, 'cachedir')
+                and memory.cachedir is None
+            ):
+                # we do not clone when caching is disabled to
+                # preserve backward compatibility
+                cloned_transformer = transformer
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
@@ -694,17 +688,14 @@ def make_pipeline(*steps, **kwargs):
     memory = kwargs.pop('memory', None)
     verbose = kwargs.pop('verbose', False)
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
+        raise TypeError(f'Unknown keyword arguments: "{list(kwargs.keys())[0]}"')
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
 def _transform_one(transformer, X, y, weight, **fit_params):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
-    if weight is None:
-        return res
-    return res * weight
+    return res if weight is None else res * weight
 
 
 def _fit_transform_one(transformer,
@@ -725,9 +716,7 @@ def _fit_transform_one(transformer,
         else:
             res = transformer.fit(X, y, **fit_params).transform(X)
 
-    if weight is None:
-        return res, transformer
-    return res * weight, transformer
+    return (res, transformer) if weight is None else (res * weight, transformer)
 
 
 def _fit_one(transformer,
@@ -872,8 +861,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+            feature_names.extend(
+                [f"{name}__{f}" for f in trans.get_feature_names()]
+            )
+
         return feature_names
 
     def fit(self, X, y=None):
@@ -932,9 +923,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         return Xs
 
     def _log_message(self, name, idx, total):
-        if not self.verbose:
-            return None
-        return '(step %d of %d) Processing %s' % (idx, total, name)
+        return (
+            '(step %d of %d) Processing %s' % (idx, total, name)
+            if self.verbose
+            else None
+        )
 
     def _parallel_func(self, X, y, fit_params, func):
         """Runs func in parallel on X and y"""
@@ -1025,7 +1018,6 @@ def make_union(*transformers, **kwargs):
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
+        raise TypeError(f'Unknown keyword arguments: "{list(kwargs.keys())[0]}"')
     return FeatureUnion(
         _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)

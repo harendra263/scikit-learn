@@ -188,23 +188,9 @@ class _CFNode:
 
         # If the subcluster has a child, we need a recursive strategy.
         if closest_subcluster.child_ is not None:
-            split_child = closest_subcluster.child_.insert_cf_subcluster(
-                subcluster)
-
-            if not split_child:
-                # If it is determined that the child need not be split, we
-                # can just update the closest_subcluster
-                closest_subcluster.update(subcluster)
-                self.init_centroids_[closest_index] = \
-                    self.subclusters_[closest_index].centroid_
-                self.init_sq_norm_[closest_index] = \
-                    self.subclusters_[closest_index].sq_norm_
-                return False
-
-            # things not too good. we need to redistribute the subclusters in
-            # our child node, and add a new subcluster in the parent
-            # subcluster to accommodate the new child.
-            else:
+            if split_child := closest_subcluster.child_.insert_cf_subcluster(
+                subcluster
+            ):
                 new_subcluster1, new_subcluster2 = _split_node(
                     closest_subcluster.child_, threshold, branching_factor)
                 self.update_split_subclusters(
@@ -212,27 +198,30 @@ class _CFNode:
 
                 if len(self.subclusters_) > self.branching_factor:
                     return True
-                return False
-
-        # good to go!
-        else:
-            merged = closest_subcluster.merge_subcluster(
-                subcluster, self.threshold)
-            if merged:
+            else:
+                # If it is determined that the child need not be split, we
+                # can just update the closest_subcluster
+                closest_subcluster.update(subcluster)
                 self.init_centroids_[closest_index] = \
-                    closest_subcluster.centroid_
+                        self.subclusters_[closest_index].centroid_
                 self.init_sq_norm_[closest_index] = \
-                    closest_subcluster.sq_norm_
+                        self.subclusters_[closest_index].sq_norm_
+            return False
+
+        else:
+            if merged := closest_subcluster.merge_subcluster(
+                subcluster, self.threshold
+            ):
+                self.init_centroids_[closest_index] = \
+                        closest_subcluster.centroid_
+                self.init_sq_norm_[closest_index] = \
+                        closest_subcluster.sq_norm_
                 return False
 
-            # not close to any other subclusters, and we still
-            # have space, so add.
             elif len(self.subclusters_) < self.branching_factor:
                 self.append_subcluster(subcluster)
                 return False
 
-            # We do not have enough space nor is it closer to an
-            # other subcluster. We need to split.
             else:
                 self.append_subcluster(subcluster)
                 return True
@@ -306,7 +295,7 @@ class _CFSubcluster:
         if sq_radius <= threshold ** 2:
             (self.n_samples_, self.linear_sum_, self.squared_sum_,
              self.centroid_, self.sq_norm_) = \
-                new_n, new_ls, new_ss, new_centroid, new_norm
+                    new_n, new_ls, new_ss, new_centroid, new_norm
             return True
         return False
 
@@ -469,16 +458,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             self.root_.prev_leaf_ = self.dummy_leaf_
 
         # Cannot vectorize. Enough to convince to use cython.
-        if not sparse.issparse(X):
-            iter_func = iter
-        else:
-            iter_func = _iterate_sparse_X
-
+        iter_func = _iterate_sparse_X if sparse.issparse(X) else iter
         for sample in iter_func(X):
             subcluster = _CFSubcluster(linear_sum=sample)
-            split = self.root_.insert_cf_subcluster(subcluster)
-
-            if split:
+            if split := self.root_.insert_cf_subcluster(subcluster):
                 new_subcluster1, new_subcluster2 = _split_node(
                     self.root_, threshold, branching_factor)
                 del self.root_
@@ -612,11 +595,6 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         if clusterer is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
-            if not_enough_centroids:
-                warnings.warn(
-                    "Number of subclusters found (%d) by Birch is less "
-                    "than (%d). Decrease the threshold."
-                    % (len(centroids), self.n_clusters), ConvergenceWarning)
         else:
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as
@@ -624,5 +602,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             self.subcluster_labels_ = clusterer.fit_predict(
                 self.subcluster_centers_)
 
+        if not_enough_centroids:
+            warnings.warn(
+                "Number of subclusters found (%d) by Birch is less "
+                "than (%d). Decrease the threshold."
+                % (len(centroids), self.n_clusters), ConvergenceWarning)
         if compute_labels:
             self.labels_ = self.predict(X)

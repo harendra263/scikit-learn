@@ -98,20 +98,13 @@ def _pprint(params, offset=0, printer=repr):
     # Do a multi-line justified repr:
     options = np.get_printoptions()
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
-    params_list = list()
+    params_list = []
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
-            # use str for representing floating point numbers
-            # this way we get consistent representation across
-            # architectures and versions.
-            this_repr = '%s=%s' % (k, str(v))
-        else:
-            # use repr of the rest
-            this_repr = '%s=%s' % (k, printer(v))
+        this_repr = f'{k}={str(v)}' if type(v) is float else f'{k}={printer(v)}'
         if len(this_repr) > 500:
-            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+            this_repr = f'{this_repr[:300]}...{this_repr[-100:]}'
         if i > 0:
             if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
                 params_list.append(line_sep)
@@ -133,9 +126,10 @@ def _update_if_consistent(dict1, dict2):
     common_keys = set(dict1.keys()).intersection(dict2.keys())
     for key in common_keys:
         if dict1[key] != dict2[key]:
-            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
-                key, dict1[key], dict2[key]
-            ))
+            raise TypeError(
+                f"Inconsistent values for tag {key}: {dict1[key]} != {dict2[key]}"
+            )
+
     dict1.update(dict2)
     return dict1
 
@@ -191,7 +185,7 @@ class BaseEstimator:
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = dict()
+        out = {}
         for key in self._get_param_names():
             try:
                 value = getattr(self, key)
@@ -204,7 +198,7 @@ class BaseEstimator:
                 value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
-                out.update((key + '__' + k, val) for k, val in deep_items)
+                out |= ((f'{key}__{k}', val) for k, val in deep_items)
             out[key] = value
         return out
 
@@ -290,7 +284,7 @@ class BaseEstimator:
             ellipsis = '...'
             if left_lim + len(ellipsis) < len(repr_) - right_lim:
                 # Only add ellipsis if it results in a shorter repr
-                repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+                repr_ = f'{repr_[:left_lim]}...{repr_[-right_lim:]}'
 
         return repr_
 

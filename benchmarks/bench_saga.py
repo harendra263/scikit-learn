@@ -26,9 +26,10 @@ def fit_single(solver, X, y, penalty='l2', single_target=True, C=1,
         print('skip_slowping l1 logistic regression with solver lightning.')
         return
 
-    print('Solving %s logistic regression with penalty %s, solver %s.'
-          % ('binary' if single_target else 'multinomial',
-             penalty, solver))
+    print(
+        f"Solving {'binary' if single_target else 'multinomial'} logistic regression with penalty {penalty}, solver {solver}."
+    )
+
 
     if solver == 'lightning':
         from lightning.classification import SAGAClassifier
@@ -58,9 +59,10 @@ def fit_single(solver, X, y, penalty='l2', single_target=True, C=1,
         lightning_penalty = 'l1'
 
     for this_max_iter in range(1, max_iter + 1, 2):
-        print('[%s, %s, %s] Max iter: %s' %
-              ('binary' if single_target else 'multinomial',
-               penalty, solver, this_max_iter))
+        print(
+            f"[{'binary' if single_target else 'multinomial'}, {penalty}, {solver}] Max iter: {this_max_iter}"
+        )
+
         if solver == 'lightning':
             lr = SAGAClassifier(loss='log', alpha=alpha, beta=beta,
                                 penalty=lightning_penalty,
@@ -169,7 +171,7 @@ def exp(solvers, penalty, single_target,
 
     res = []
     idx = 0
-    for dtype_name in dtypes_mapping.keys():
+    for dtype_name in dtypes_mapping:
         for solver in solvers:
             if not (skip_slow and
                     solver == 'lightning' and
@@ -210,11 +212,16 @@ def plot(outname=None):
                                                 group['times'],
                                                 group['solver'],
                                                 group["dtype"]):
-            ax.plot(times, scores, label="%s - %s" % (solver, dtype),
-                    color=colors[solver],
-                    alpha=alpha[dtype],
-                    marker=".",
-                    linestyle=linestyles[dtype])
+            ax.plot(
+                times,
+                scores,
+                label=f"{solver} - {dtype}",
+                color=colors[solver],
+                alpha=alpha[dtype],
+                marker=".",
+                linestyle=linestyles[dtype],
+            )
+
             ax.axvline(times[-1], color=colors[solver],
                        alpha=alpha[dtype],
                        linestyle=linestyles[dtype])
@@ -245,10 +252,16 @@ def plot(outname=None):
                                                   group['times'],
                                                   group['solver'],
                                                   group["dtype"]):
-            ax.plot(times, accuracy, label="%s - %s" % (solver, dtype),
-                    alpha=alpha[dtype],
-                    marker=".",
-                    color=colors[solver], linestyle=linestyles[dtype])
+            ax.plot(
+                times,
+                accuracy,
+                label=f"{solver} - {dtype}",
+                alpha=alpha[dtype],
+                marker=".",
+                color=colors[solver],
+                linestyle=linestyles[dtype],
+            )
+
             ax.axvline(times[-1], color=colors[solver],
                        alpha=alpha[dtype],
                        linestyle=linestyles[dtype])
@@ -257,10 +270,10 @@ def plot(outname=None):
         ax.set_ylabel('Test accuracy')
         ax.legend()
         name = 'single_target' if single_target else 'multi_target'
-        name += '_%s' % penalty
+        name += f'_{penalty}'
         plt.suptitle(name)
         if outname is None:
-            outname = name + '.png'
+            outname = f'{name}.png'
         fig.tight_layout()
         fig.subplots_adjust(top=0.9)
 
@@ -269,11 +282,16 @@ def plot(outname=None):
                                                 group['times'],
                                                 group['solver'],
                                                 group["dtype"]):
-            ax.plot(np.arange(len(scores)),
-                    scores, label="%s - %s" % (solver, dtype),
-                    marker=".",
-                    alpha=alpha[dtype],
-                    color=colors[solver], linestyle=linestyles[dtype])
+            ax.plot(
+                np.arange(len(scores)),
+                scores,
+                label=f"{solver} - {dtype}",
+                marker=".",
+                alpha=alpha[dtype],
+                color=colors[solver],
+                linestyle=linestyles[dtype],
+            )
+
 
         ax.set_yscale("log")
         ax.set_xlabel('# iterations')
@@ -296,7 +314,7 @@ if __name__ == '__main__':
             if n_sample is not None:
                 outname = "figures/saga_%s_%d.png" % (penalty, n_sample)
             else:
-                outname = "figures/saga_%s_all.png" % (penalty,)
+                outname = f"figures/saga_{penalty}_all.png"
             try:
                 os.makedirs("figures")
             except OSError:

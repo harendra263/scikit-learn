@@ -29,10 +29,7 @@ def build_from_c_and_cpp_files(extensions):
         for sfile in extension.sources:
             path, ext = os.path.splitext(sfile)
             if ext in ('.pyx', '.py'):
-                if extension.language == 'c++':
-                    ext = '.cpp'
-                else:
-                    ext = '.c'
+                ext = '.cpp' if extension.language == 'c++' else '.c'
                 sfile = path + ext
             sources.append(sfile)
         extension.sources = sources
@@ -42,9 +39,7 @@ def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
     with_openmp = check_openmp_support()
 
-    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
-
-    if is_release:
+    if is_release := os.path.exists(os.path.join(top_path, 'PKG-INFO')):
         build_from_c_and_cpp_files(config.ext_modules)
     else:
         message = ('Please install cython with a version >= {0} in order '

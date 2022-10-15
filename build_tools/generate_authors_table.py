@@ -68,10 +68,16 @@ def get_contributors():
     core_devs = [c['login'] for c in core_devs]
     members = [c['login'] for c in members]
 
-    # add missing contributors with GitHub accounts
-    members.extend(['dubourg', 'mbrucher', 'thouis', 'jarrodmillman'])
-    # add missing contributors without GitHub accounts
-    members.extend(['Angel Soler Gollonet'])
+    members.extend(
+        [
+            'dubourg',
+            'mbrucher',
+            'thouis',
+            'jarrodmillman',
+            'Angel Soler Gollonet',
+        ]
+    )
+
     # remove CI bots
     members.remove('sklearn-ci')
     members.remove('sklearn-lgtm')
@@ -95,9 +101,9 @@ def get_contributors():
 
 def get_profile(login):
     """Get the GitHub profile from login"""
-    print("get profile for %s" % (login, ))
+    print(f"get profile for {login}")
     try:
-        profile = get("https://api.github.com/users/%s" % login).json()
+        profile = get(f"https://api.github.com/users/{login}").json()
     except requests.exceptions.HTTPError:
         return dict(name=login, avatar_url=LOGO_URL, html_url="")
 
@@ -139,21 +145,23 @@ def generate_table(contributors):
     for row in group_iterable(contributors, size=ROW_SIZE):
         lines.append("    <tr>")
         for contributor in row:
-            lines.append("    <td>")
-            lines.append(
-                "    <a href='%s'><img src='%s' class='avatar' /></a> <br />" %
-                (contributor["html_url"], contributor["avatar_url"]))
-            lines.append("    <p>%s</p>" % (contributor["name"], ))
-            lines.append("    </td>")
+            lines.extend(
+                (
+                    "    <td>",
+                    "    <a href='%s'><img src='%s' class='avatar' /></a> <br />"
+                    % (contributor["html_url"], contributor["avatar_url"]),
+                    f'    <p>{contributor["name"]}</p>',
+                    "    </td>",
+                )
+            )
+
         lines.append("    </tr>")
     lines.append("    </table>")
     return '\n'.join(lines)
 
 
 def generate_list(contributors):
-    lines = []
-    for contributor in contributors:
-        lines.append("- %s" % (contributor["name"], ))
+    lines = [f'- {contributor["name"]}' for contributor in contributors]
     return '\n'.join(lines)
 
 

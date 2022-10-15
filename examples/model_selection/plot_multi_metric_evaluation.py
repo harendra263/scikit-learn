@@ -15,6 +15,7 @@ The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
 correspond to the scorer (key) that is set to the ``refit`` attribute.
 """
 
+
 # Author: Raghav RV <rvraghav93@gmail.com>
 # License: BSD
 
@@ -71,17 +72,23 @@ X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
 for scorer, color in zip(sorted(scoring), ['g', 'k']):
     for sample, style in (('train', '--'), ('test', '-')):
-        sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
-        sample_score_std = results['std_%s_%s' % (sample, scorer)]
+        sample_score_mean = results[f'mean_{sample}_{scorer}']
+        sample_score_std = results[f'std_{sample}_{scorer}']
         ax.fill_between(X_axis, sample_score_mean - sample_score_std,
                         sample_score_mean + sample_score_std,
                         alpha=0.1 if sample == 'test' else 0, color=color)
-        ax.plot(X_axis, sample_score_mean, style, color=color,
-                alpha=1 if sample == 'test' else 0.7,
-                label="%s (%s)" % (scorer, sample))
+        ax.plot(
+            X_axis,
+            sample_score_mean,
+            style,
+            color=color,
+            alpha=1 if sample == 'test' else 0.7,
+            label=f"{scorer} ({sample})",
+        )
 
-    best_index = np.nonzero(results['rank_test_%s' % scorer] == 1)[0][0]
-    best_score = results['mean_test_%s' % scorer][best_index]
+
+    best_index = np.nonzero(results[f'rank_test_{scorer}'] == 1)[0][0]
+    best_score = results[f'mean_test_{scorer}'][best_index]
 
     # Plot a dotted vertical line at the best score for that scorer marked by x
     ax.plot([X_axis[best_index], ] * 2, [0, best_score],

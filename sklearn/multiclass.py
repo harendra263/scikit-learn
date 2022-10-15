@@ -67,12 +67,8 @@ def _fit_binary(estimator, X, y, classes=None):
     unique_y = np.unique(y)
     if len(unique_y) == 1:
         if classes is not None:
-            if y[0] == -1:
-                c = 0
-            else:
-                c = y[0]
-            warnings.warn("Label %s is present in all training examples." %
-                          str(classes[c]))
+            c = 0 if y[0] == -1 else y[0]
+            warnings.warn(f"Label {str(classes[c])} is present in all training examples.")
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -208,11 +204,19 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
-            self.estimator, X, column, classes=[
-                "not %s" % self.label_binarizer_.classes_[i],
-                self.label_binarizer_.classes_[i]])
-            for i, column in enumerate(columns))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_binary)(
+                self.estimator,
+                X,
+                column,
+                classes=[
+                    f"not {self.label_binarizer_.classes_[i]}",
+                    self.label_binarizer_.classes_[i],
+                ],
+            )
+            for i, column in enumerate(columns)
+        )
+
 
         return self
 
@@ -388,9 +392,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
         coefs = [e.coef_ for e in self.estimators_]
-        if sp.issparse(coefs[0]):
-            return sp.vstack(coefs)
-        return np.vstack(coefs)
+        return sp.vstack(coefs) if sp.issparse(coefs[0]) else np.vstack(coefs)
 
     @property
     def intercept_(self):
@@ -617,9 +619,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  for est, Xi in zip(self.estimators_, Xs)]).T
         Y = _ovr_decision_function(predictions,
                                    confidences, len(self.classes_))
-        if self.n_classes_ == 2:
-            return Y[:, 1]
-        return Y
+        return Y[:, 1] if self.n_classes_ == 2 else Y
 
     @property
     def n_classes_(self):

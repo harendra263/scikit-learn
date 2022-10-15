@@ -186,10 +186,11 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
-    components = rng.normal(loc=0.0,
-                            scale=1.0 / np.sqrt(n_components),
-                            size=(n_components, n_features))
-    return components
+    return rng.normal(
+        loc=0.0,
+        scale=1.0 / np.sqrt(n_components),
+        size=(n_components, n_features),
+    )
 
 
 def sparse_random_matrix(n_components, n_features, density='auto',
@@ -363,8 +364,10 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
                                        n_features))
         else:
             if self.n_components <= 0:
-                raise ValueError("n_components must be greater than 0, got %s"
-                                 % self.n_components)
+                raise ValueError(
+                    f"n_components must be greater than 0, got {self.n_components}"
+                )
+
 
             elif self.n_components > n_features:
                 warnings.warn(
@@ -410,9 +413,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
                 'X at fit stage had a different number of features. '
                 '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
 
-        X_new = safe_sparse_dot(X, self.components_.T,
-                                dense_output=self.dense_output)
-        return X_new
+        return safe_sparse_dot(
+            X, self.components_.T, dense_output=self.dense_output
+        )
 
 
 class GaussianRandomProjection(BaseRandomProjection):

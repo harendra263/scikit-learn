@@ -15,6 +15,7 @@ More details on tools available for model selection can be found in the
 sections on :ref:`cross_validation` and :ref:`grid_search`.
 
 """
+
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -44,12 +45,10 @@ tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
 scores = ['precision', 'recall']
 
 for score in scores:
-    print("# Tuning hyper-parameters for %s" % score)
+    print(f"# Tuning hyper-parameters for {score}")
     print()
 
-    clf = GridSearchCV(
-        SVC(), tuned_parameters, scoring='%s_macro' % score
-    )
+    clf = GridSearchCV(SVC(), tuned_parameters, scoring=f'{score}_macro')
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")

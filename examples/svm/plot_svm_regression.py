@@ -6,6 +6,7 @@ Support Vector Regression (SVR) using linear and non-linear kernels
 Toy example of 1D regression using linear, polynomial and RBF kernels.
 
 """
+
 print(__doc__)
 
 import numpy as np
@@ -38,11 +39,23 @@ model_color = ['m', 'c', 'g']
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 10), sharey=True)
 for ix, svr in enumerate(svrs):
-    axes[ix].plot(X, svr.fit(X, y).predict(X), color=model_color[ix], lw=lw,
-                  label='{} model'.format(kernel_label[ix]))
-    axes[ix].scatter(X[svr.support_], y[svr.support_], facecolor="none",
-                     edgecolor=model_color[ix], s=50,
-                     label='{} support vectors'.format(kernel_label[ix]))
+    axes[ix].plot(
+        X,
+        svr.fit(X, y).predict(X),
+        color=model_color[ix],
+        lw=lw,
+        label=f'{kernel_label[ix]} model',
+    )
+
+    axes[ix].scatter(
+        X[svr.support_],
+        y[svr.support_],
+        facecolor="none",
+        edgecolor=model_color[ix],
+        s=50,
+        label=f'{kernel_label[ix]} support vectors',
+    )
+
     axes[ix].scatter(X[np.setdiff1d(np.arange(len(X)), svr.support_)],
                      y[np.setdiff1d(np.arange(len(X)), svr.support_)],
                      facecolor="none", edgecolor="k", s=50,

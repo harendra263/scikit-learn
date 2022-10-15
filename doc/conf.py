@@ -259,7 +259,7 @@ else:
             'or a version like X.Y or X.Y.Z.'.format(version))
 
     major, minor = match.groups()
-    binder_branch = '{}.{}.X'.format(major, minor)
+    binder_branch = f'{major}.{minor}.X'
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
@@ -307,7 +307,7 @@ def make_carousel_thumbs(app, exception):
     for glr_plot, max_width in carousel_thumbs.items():
         image = os.path.join(image_dir, glr_plot)
         if os.path.exists(image):
-            c_thumb = os.path.join(image_dir, glr_plot[:-4] + '_carousel.png')
+            c_thumb = os.path.join(image_dir, f'{glr_plot[:-4]}_carousel.png')
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
