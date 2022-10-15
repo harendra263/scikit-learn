@@ -109,7 +109,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     n_samples = S.shape[0]
 
     if S.shape[0] != S.shape[1]:
-        raise ValueError("S must be a square array (shape=%s)" % repr(S.shape))
+        raise ValueError(f"S must be a square array (shape={repr(S.shape)})")
 
     if preference is None:
         preference = np.median(S)
@@ -368,10 +368,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self
 
         """
-        if self.affinity == "precomputed":
-            accept_sparse = False
-        else:
-            accept_sparse = 'csr'
+        accept_sparse = False if self.affinity == "precomputed" else 'csr'
         X = check_array(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
@@ -383,7 +380,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                              % str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
-            affinity_propagation(
+                affinity_propagation(
                 self.affinity_matrix_, self.preference, max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
                 copy=self.copy, verbose=self.verbose, return_n_iter=True)
@@ -414,11 +411,10 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         if self.cluster_centers_.shape[0] > 0:
             return pairwise_distances_argmin(X, self.cluster_centers_)
-        else:
-            warnings.warn("This model does not have any cluster centers "
-                          "because affinity propagation did not converge. "
-                          "Labeling every sample as '-1'.", ConvergenceWarning)
-            return np.array([-1] * X.shape[0])
+        warnings.warn("This model does not have any cluster centers "
+                      "because affinity propagation did not converge. "
+                      "Labeling every sample as '-1'.", ConvergenceWarning)
+        return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):
         """Fit the clustering from features or affinity matrix, and return

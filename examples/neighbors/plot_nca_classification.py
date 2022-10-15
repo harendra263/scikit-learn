@@ -14,6 +14,7 @@ maximises the (stochastic) nearest neighbor classification accuracy on the
 training set.
 """
 
+
 # License: BSD 3 clause
 
 import numpy as np
@@ -81,7 +82,7 @@ for name, clf in zip(names, classifiers):
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold, edgecolor='k', s=20)
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
-    plt.title("{} (k = {})".format(name, n_neighbors))
+    plt.title(f"{name} (k = {n_neighbors})")
     plt.text(0.9, 0.1, '{:.2f}'.format(score), size=15,
              ha='center', va='center', transform=plt.gca().transAxes)
 

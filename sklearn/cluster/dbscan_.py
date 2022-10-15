@@ -136,7 +136,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
-    if not eps > 0.0:
+    if eps <= 0.0:
         raise ValueError("eps must be positive.")
 
     X = check_array(X, accept_sparse='csr')

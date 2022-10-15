@@ -42,10 +42,13 @@ def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
         make_union(imputer, MissingIndicator(missing_values=0)),
         REGRESSOR)
-    impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                    scoring='neg_mean_squared_error',
-                                    cv=N_SPLITS)
-    return impute_scores
+    return cross_val_score(
+        estimator,
+        X_missing,
+        y_missing,
+        scoring='neg_mean_squared_error',
+        cv=N_SPLITS,
+    )
 
 
 def get_results(dataset):

@@ -90,6 +90,7 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
+
 ###############################################################################
 # In binary classification settings
 # --------------------------------------------------------
@@ -190,9 +191,9 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 
 # For each class
-precision = dict()
-recall = dict()
-average_precision = dict()
+precision = {}
+recall = {}
+average_precision = {}
 for i in range(n_classes):
     precision[i], recall[i], _ = precision_recall_curve(Y_test[:, i],
                                                         y_score[:, i])
@@ -235,20 +236,20 @@ colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
 
 plt.figure(figsize=(7, 8))
 f_scores = np.linspace(0.2, 0.8, num=4)
-lines = []
-labels = []
 for f_score in f_scores:
     x = np.linspace(0.01, 1)
     y = f_score * x / (2 * x - f_score)
     l, = plt.plot(x[y >= 0], y[y >= 0], color='gray', alpha=0.2)
     plt.annotate('f1={0:0.1f}'.format(f_score), xy=(0.9, y[45] + 0.02))
 
-lines.append(l)
-labels.append('iso-f1 curves')
+lines = [l]
 l, = plt.plot(recall["micro"], precision["micro"], color='gold', lw=2)
 lines.append(l)
-labels.append('micro-average Precision-recall (area = {0:0.2f})'
-              ''.format(average_precision["micro"]))
+labels = [
+    'iso-f1 curves',
+    'micro-average Precision-recall (area = {0:0.2f})'
+    ''.format(average_precision["micro"]),
+]
 
 for i, color in zip(range(n_classes), colors):
     l, = plt.plot(recall[i], precision[i], color=color, lw=2)

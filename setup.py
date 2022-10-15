@@ -70,17 +70,18 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
 
     extra_setuptools_args = dict(
-        zip_safe=False,  # the package can run out of an .egg file
+        zip_safe=False,
         include_package_data=True,
         extras_require={
             'alldeps': (
-                'numpy >= {}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {}'.format(SCIPY_MIN_VERSION),
-            ),
+                f'numpy >= {NUMPY_MIN_VERSION}',
+                f'scipy >= {SCIPY_MIN_VERSION}',
+            )
         },
     )
+
 else:
-    extra_setuptools_args = dict()
+    extra_setuptools_args = {}
 
 
 # Custom clean command to remove build artifacts
@@ -197,44 +198,46 @@ def get_numpy_status():
 
 
 def setup_package():
-    metadata = dict(name=DISTNAME,
-                    maintainer=MAINTAINER,
-                    maintainer_email=MAINTAINER_EMAIL,
-                    description=DESCRIPTION,
-                    license=LICENSE,
-                    url=URL,
-                    download_url=DOWNLOAD_URL,
-                    project_urls=PROJECT_URLS,
-                    version=VERSION,
-                    long_description=LONG_DESCRIPTION,
-                    classifiers=['Intended Audience :: Science/Research',
-                                 'Intended Audience :: Developers',
-                                 'License :: OSI Approved',
-                                 'Programming Language :: C',
-                                 'Programming Language :: Python',
-                                 'Topic :: Software Development',
-                                 'Topic :: Scientific/Engineering',
-                                 'Operating System :: Microsoft :: Windows',
-                                 'Operating System :: POSIX',
-                                 'Operating System :: Unix',
-                                 'Operating System :: MacOS',
-                                 'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.5',
-                                 'Programming Language :: Python :: 3.6',
-                                 'Programming Language :: Python :: 3.7',
-                                 ('Programming Language :: Python :: '
-                                  'Implementation :: CPython'),
-                                 ('Programming Language :: Python :: '
-                                  'Implementation :: PyPy')
-                                 ],
-                    cmdclass=cmdclass,
-                    python_requires=">=3.5",
-                    install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION)
-                    ],
-                    **extra_setuptools_args)
+    metadata = dict(
+        name=DISTNAME,
+        maintainer=MAINTAINER,
+        maintainer_email=MAINTAINER_EMAIL,
+        description=DESCRIPTION,
+        license=LICENSE,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        project_urls=PROJECT_URLS,
+        version=VERSION,
+        long_description=LONG_DESCRIPTION,
+        classifiers=[
+            'Intended Audience :: Science/Research',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved',
+            'Programming Language :: C',
+            'Programming Language :: Python',
+            'Topic :: Software Development',
+            'Topic :: Scientific/Engineering',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: POSIX',
+            'Operating System :: Unix',
+            'Operating System :: MacOS',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
+            ('Programming Language :: Python :: ' 'Implementation :: CPython'),
+            ('Programming Language :: Python :: ' 'Implementation :: PyPy'),
+        ],
+        cmdclass=cmdclass,
+        python_requires=">=3.5",
+        install_requires=[
+            f'numpy>={NUMPY_MIN_VERSION}',
+            f'scipy>={SCIPY_MIN_VERSION}',
+            f'joblib>={JOBLIB_MIN_VERSION}',
+        ],
+        **extra_setuptools_args,
+    )
+
 
     if len(sys.argv) == 1 or (
             len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
@@ -261,23 +264,23 @@ def setup_package():
                 % (platform.python_version(), sys.executable))
 
         numpy_status = get_numpy_status()
-        numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
-            NUMPY_MIN_VERSION)
-
-        instructions = ("Installation instructions are available on the "
-                        "scikit-learn website: "
-                        "http://scikit-learn.org/stable/install.html\n")
+        numpy_req_str = f"scikit-learn requires NumPy >= {NUMPY_MIN_VERSION}.\n"
 
         if numpy_status['up_to_date'] is False:
+            instructions = ("Installation instructions are available on the "
+                            "scikit-learn website: "
+                            "http://scikit-learn.org/stable/install.html\n")
+
             if numpy_status['version']:
-                raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {} is out-of-date.\n{}{}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
+                raise ImportError(
+                    f"Your installation of Numerical Python (NumPy) {numpy_status['version']} is out-of-date.\n{numpy_req_str}{instructions}"
+                )
+
             else:
-                raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{}{}"
-                                  .format(numpy_req_str, instructions))
+                raise ImportError(
+                    f"Numerical Python (NumPy) is not installed.\n{numpy_req_str}{instructions}"
+                )
+
 
         from numpy.distutils.core import setup
 

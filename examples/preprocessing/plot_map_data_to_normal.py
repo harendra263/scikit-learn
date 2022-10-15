@@ -31,6 +31,7 @@ On "small" datasets (less than a few hundred points), the quantile transformer
 is prone to overfitting. The use of the power transform is then recommended.
 """
 
+
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
 #         Nicolas Hug <contact@nicolas-hug.com>
 # License: BSD 3 clause
@@ -128,9 +129,9 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
             ('Box-Cox', 'Yeo-Johnson', 'Quantile transform'),
             (lmbda_bc, lmbda_yj, None)):
         ax.hist(X_trans, color=color, bins=BINS)
-        title = 'After {}'.format(meth_name)
+        title = f'After {meth_name}'
         if lmbda is not None:
-            title += r'\n$\lambda$ = {}'.format(lmbda)
+            title += f'\n$\lambda$ = {lmbda}'
         ax.set_title(title, fontsize=FONT_SIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
         ax.set_xlim([-3.5, 3.5])

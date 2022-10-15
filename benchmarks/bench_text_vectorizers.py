@@ -32,8 +32,7 @@ def run_vectorizer(Vectorizer, X, **params):
 text = fetch_20newsgroups(subset='train').data[:1000]
 
 print("="*80 + '\n#' + "    Text vectorizers benchmark" + '\n' + '='*80 + '\n')
-print("Using a subset of the 20 newsrgoups dataset ({} documents)."
-      .format(len(text)))
+print(f"Using a subset of the 20 newsrgoups dataset ({len(text)} documents).")
 print("This benchmarks runs in ~1 min ...")
 
 res = []
@@ -46,9 +45,8 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
              ('char_wb', (4, 4))
              ]):
 
-    bench = {'vectorizer': Vectorizer.__name__}
     params = {'analyzer': analyzer, 'ngram_range': ngram_range}
-    bench.update(params)
+    bench = {'vectorizer': Vectorizer.__name__} | params
     dt = timeit.repeat(run_vectorizer(Vectorizer, text, **params),
                        number=1,
                        repeat=n_repeat)
@@ -64,8 +62,10 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
 df = pd.DataFrame(res).set_index(['analyzer', 'ngram_range', 'vectorizer'])
 
 print('\n========== Run time performance (sec) ===========\n')
-print('Computing the mean and the standard deviation '
-      'of the run time over {} runs...\n'.format(n_repeat))
+print(
+    f'Computing the mean and the standard deviation of the run time over {n_repeat} runs...\n'
+)
+
 print(df['time'].unstack(level=-1))
 
 print('\n=============== Memory usage (MB) ===============\n')

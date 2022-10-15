@@ -67,18 +67,22 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
         # construct object dtype array with two columns
         # first column = 'subject' and second column = 'body'
         features = np.empty(shape=(len(posts), 2), dtype=object)
+        prefix = 'Subject:'
         for i, text in enumerate(posts):
             headers, _, bod = text.partition('\n\n')
             bod = strip_newsgroup_footer(bod)
             bod = strip_newsgroup_quoting(bod)
             features[i, 1] = bod
 
-            prefix = 'Subject:'
-            sub = ''
-            for line in headers.split('\n'):
-                if line.startswith(prefix):
-                    sub = line[len(prefix):]
-                    break
+            sub = next(
+                (
+                    line[len(prefix) :]
+                    for line in headers.split('\n')
+                    if line.startswith(prefix)
+                ),
+                '',
+            )
+
             features[i, 0] = sub
 
         return features

@@ -104,8 +104,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         allowed_strategies = ("most_frequent", "stratified", "uniform",
                               "constant", "prior")
         if self.strategy not in allowed_strategies:
-            raise ValueError("Unknown strategy type: %s, expected one of %s."
-                             % (self.strategy, allowed_strategies))
+            raise ValueError(
+                f"Unknown strategy type: {self.strategy}, expected one of {allowed_strategies}."
+            )
+
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
@@ -133,11 +135,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             if self.constant is None:
                 raise ValueError("Constant target value has to be specified "
                                  "when the constant strategy is used.")
-            else:
-                constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
-                if constant.shape[0] != self.n_outputs_:
-                    raise ValueError("Constant target value should have "
-                                     "shape (%d, 1)." % self.n_outputs_)
+            constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
+            if constant.shape[0] != self.n_outputs_:
+                raise ValueError("Constant target value should have "
+                                 "shape (%d, 1)." % self.n_outputs_)
 
         (self.classes_,
          self.n_classes_,
@@ -313,10 +314,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             output.
         """
         proba = self.predict_proba(X)
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-        else:
-            return [np.log(p) for p in proba]
+        return np.log(proba) if self.n_outputs_ == 1 else [np.log(p) for p in proba]
 
     def _more_tags(self):
         return {'poor_score': True, 'no_validation': True}
@@ -419,8 +417,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         """
         allowed_strategies = ("mean", "median", "quantile", "constant")
         if self.strategy not in allowed_strategies:
-            raise ValueError("Unknown strategy type: %s, expected one of %s."
-                             % (self.strategy, allowed_strategies))
+            raise ValueError(
+                f"Unknown strategy type: {self.strategy}, expected one of {allowed_strategies}."
+            )
+
 
         y = check_array(y, ensure_2d=False)
         if len(y) == 0:
